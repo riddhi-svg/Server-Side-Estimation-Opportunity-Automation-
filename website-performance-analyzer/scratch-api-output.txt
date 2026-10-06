@@ -1,0 +1,30 @@
+{
+  "performanceImpact": {
+    "label": "VERIFIED GTM CORE impact",
+    "gtmCoreResourceCount": 12,
+    "gtmCoreTransferSize": 1990330,
+    "gtmCoreMainThreadTimeMs": 1256.503999993205,
+    "gtmCoreBootupTimeMs": 2830.5155999999715
+  },
+  "gtmMigration": {
+    "totalTags": 39,
+    "potentiallyServerSide": 18,
+    "keepClientSide": 12,
+    "needsReview": 9,
+    "tagCategoryBreakdown": {
+      "Google Analytics / GA4": 10,
+      "Google Ads": 8,
+      "Meta / Facebook": 10,
+      "Other": 11
+    }
+  },
+  "migrationOpportunities": [
+    {
+      "tagName": "GA4 Base",
+      "tagTypeVendor": "Google Analytics / GA4",
+      "currentClientSideImplementation": "gaawe",
+      "migrationClassification": "Potentially Server-Side",
+      "migrationReason": "Google Analytics / GA4 tags are natively supported and optimized for Server-Side GTM."
+    }
+  ]
+}

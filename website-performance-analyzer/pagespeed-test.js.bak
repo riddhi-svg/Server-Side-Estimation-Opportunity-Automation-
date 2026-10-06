@@ -1,0 +1,461 @@
+require('dotenv').config();
+
+const API_KEY = process.env.PAGESPEED_API_KEY;
+
+async function runPageSpeedTest(targetUrl, strategy = 'mobile') {
+  if (!targetUrl) {
+    throw new Error('No URL provided.');
+  }
+
+  const CATEGORY = 'performance';
+  const API_URL = `https://www.googleapis.com/pagespeedonline/v5/runPagespeed?url=${encodeURIComponent(targetUrl)}&key=${API_KEY}&strategy=${strategy}&category=${CATEGORY}`;
+
+  console.log(`Starting PageSpeed Insights test for: ${targetUrl}`);
+  console.log(`Strategy: ${strategy}`);
+  console.log('Fetching data... (this may take a few moments)\n');
+
+  try {
+    const response = await fetch(API_URL);
+    
+    if (!response.ok) {
+      let errorMsg = `API request failed with status: ${response.status} ${response.statusText}`;
+      try {
+        const errorBody = await response.json();
+        if (errorBody.error && errorBody.error.message) {
+          errorMsg = errorBody.error.message;
+        }
+      } catch (e) {}
+      throw new Error(errorMsg);
+    }
+
+    const data = await response.json();
+
+    if (!data.lighthouseResult || !data.lighthouseResult.audits) {
+      throw new Error('No Lighthouse results found in the API response.');
+    }
+
+    const { categories, audits } = data.lighthouseResult;
+
+    const getScoreStatus = (score) => {
+      if (score === null) return null;
+      if (score >= 90) return 'Good';
+      if (score >= 50) return 'Needs Improvement';
+      return 'Poor';
+    };
+
+    const getLcpStatus = (value) => {
+      if (value === null) return null;
+      if (value <= 2500) return 'Good';
+      if (value <= 4000) return 'Needs Improvement';
+      return 'Poor';
+    };
+
+    const getInpStatus = (value) => {
+      if (value === null) return null;
+      if (value <= 200) return 'Good';
+      if (value <= 500) return 'Needs Improvement';
+      return 'Poor';
+    };
+
+    const getClsStatus = (value) => {
+      if (value === null) return null;
+      if (value <= 0.1) return 'Good';
+      if (value <= 0.25) return 'Needs Improvement';
+      return 'Poor';
+    };
+
+    const getRawMetric = (auditId) => {
+      const audit = audits[auditId];
+      if (audit && audit.numericValue !== undefined) {
+        return audit.numericValue;
+      }
+      return null;
+    };
+
+    const rawScore = (categories?.performance?.score !== undefined)
+      ? Math.round(categories.performance.score * 100)
+      : null;
+
+    const rawLcp = getRawMetric('largest-contentful-paint');
+    const rawInp = getRawMetric('interactive');
+    const rawCls = getRawMetric('cumulative-layout-shift');
+    const rawFcp = getRawMetric('first-contentful-paint');
+    const rawTtfb = getRawMetric('server-response-time');
+    const rawTbt = getRawMetric('total-blocking-time');
+    const rawSpeedIndex = getRawMetric('speed-index');
+
+    const opps = Object.values(audits).filter(a => a.details && a.details.type === 'opportunity' && a.score !== null && a.score < 1);
+    const opportunities = opps.sort((a, b) => a.score - b.score).map(opp => ({
+      title: opp.title,
+      savings: opp.displayValue || 'N/A'
+    }));
+
+    // --- Third-Party & GTM Analysis Extraction ---
+    const normalizeUrl = (url) => {
+      if (!url) return '';
+      let norm = url.replace(/%20/g, '').replace(/ /g, '');
+      if (norm.endsWith('/')) norm = norm.slice(0, -1);
+      return norm;
+    };
+
+    const thirdPartyAnalysis = {
+      entities: [],
+      bootupTimes: [],
+      mainthreadBreakdown: []
+    };
+
+    const thirdPartyAudit = audits['third-party-summary'];
+    if (thirdPartyAudit && thirdPartyAudit.details && thirdPartyAudit.details.items) {
+      thirdPartyAudit.details.items.forEach(item => {
+        const vendor = typeof item.entity === 'object' ? item.entity.text : (item.entity || 'Unknown');
+        const transferSize = item.transferSize || 0;
+        const mainThreadTime = item.blockingTime || 0;
+        
+        let subUrls = [];
+        if (item.subItems && item.subItems.items) {
+          subUrls = item.subItems.items.map(sub => sub.url);
+        }
+        const normSubUrls = subUrls.map(normalizeUrl);
+        
+        let isGtmRelated = false;
+        let gtmRelationshipNotes = 'Could not reliably determine if triggered by GTM from available PageSpeed data.';
+        
+        if (vendor.toLowerCase().includes('google tag manager')) {
+          isGtmRelated = true;
+          gtmRelationshipNotes = 'Identified as GTM or Google Tag script.';
+        } else if (normSubUrls.some(url => url.includes('googletagmanager.com/gtm.js') || url.includes('googletagmanager.com/gtag/js'))) {
+          isGtmRelated = true;
+          gtmRelationshipNotes = 'Contains GTM/Google Tag script URL.';
+        }
+
+        thirdPartyAnalysis.entities.push({
+          vendor,
+          transferSize,
+          mainThreadTime,
+          subUrls,
+          normSubUrls, // temporary for matching
+          isGtmRelated,
+          gtmRelationshipNotes
+        });
+      });
+    }
+
+    const bootupTimeAudit = audits['bootup-time'];
+    if (bootupTimeAudit && bootupTimeAudit.details && bootupTimeAudit.details.items) {
+      thirdPartyAnalysis.bootupTimes = bootupTimeAudit.details.items.map(item => ({
+        url: item.url,
+        totalCpuTime: item.total || 0,
+        scriptParseCompileTime: item.scripting || item.scriptParseCompile || 0
+      }));
+    }
+
+    const mainthreadAudit = audits['mainthread-work-breakdown'];
+    if (mainthreadAudit && mainthreadAudit.details && mainthreadAudit.details.items) {
+      thirdPartyAnalysis.mainthreadBreakdown = mainthreadAudit.details.items.map(item => ({
+        category: item.groupLabel || item.group || 'Unknown',
+        timeSpentMs: item.duration || 0
+      }));
+    }
+
+    // --- Performance Impact Mapping ---
+    const performanceImpact = {
+      longTasks: [],
+      renderBlockingResources: [],
+      layoutShifts: [],
+      lcpEvidence: []
+    };
+
+    const getAttribution = (rawUrl) => {
+      if (!rawUrl) return { entity: 'Unknown', status: 'UNATTRIBUTED' };
+      const url = normalizeUrl(rawUrl);
+
+      if (url.includes('googletagmanager.com/gtm.js?id=GTM-')) {
+        return { entity: 'Google Tag Manager', status: 'GTM_CORE' };
+      }
+      if (url.includes('googletagmanager.com/gtag/js')) {
+        return { entity: 'Google Tag Manager', status: 'GOOGLE_TAG' };
+      }
+      
+      for (const ent of thirdPartyAnalysis.entities) {
+        if (ent.normSubUrls && ent.normSubUrls.includes(url)) {
+           return { entity: ent.vendor, status: 'THIRD_PARTY' };
+        }
+      }
+      return { entity: 'Unknown', status: 'UNATTRIBUTED' };
+    };
+
+    const longTasksAudit = audits['long-tasks'];
+    if (longTasksAudit && longTasksAudit.details && longTasksAudit.details.items) {
+      longTasksAudit.details.items.forEach(item => {
+        const url = item.url;
+        const attr = getAttribution(url);
+        performanceImpact.longTasks.push({
+          url: url || 'N/A',
+          vendor: attr.entity,
+          durationMs: item.duration || 0,
+          relatedPerformanceArea: 'TBT/INP',
+          impactLabel: ['TBT_RISK', 'INP_RESPONSIVENESS_RISK'],
+          evidenceSource: 'long-tasks',
+          attributionStatus: attr.status
+        });
+      });
+    }
+
+    const renderBlockingAudit = audits['render-blocking-resources'];
+    if (renderBlockingAudit && renderBlockingAudit.details && renderBlockingAudit.details.items) {
+      renderBlockingAudit.details.items.forEach(item => {
+        const url = item.url;
+        const attr = getAttribution(url);
+        performanceImpact.renderBlockingResources.push({
+          url: url || 'N/A',
+          vendor: attr.entity,
+          wastedMs: item.wastedMs || 0,
+          totalBytes: item.totalBytes || 0,
+          relatedPerformanceArea: 'LCP',
+          impactLabel: ['LCP_BLOCKER'],
+          evidenceSource: 'render-blocking-resources',
+          attributionStatus: attr.status
+        });
+      });
+    }
+
+    const layoutShiftsAudit = audits['layout-shifts'];
+    if (layoutShiftsAudit && layoutShiftsAudit.details && layoutShiftsAudit.details.items) {
+      layoutShiftsAudit.details.items.forEach(item => {
+        performanceImpact.layoutShifts.push({
+          score: item.score,
+          affectedNode: item.node ? (item.node.snippet || item.node.nodeLabel || 'Unknown node') : 'Unknown',
+          relatedPerformanceArea: 'CLS',
+          impactLabel: ['CLS_RELATED'],
+          evidenceSource: 'layout-shifts',
+          attributionStatus: 'UNATTRIBUTED',
+          vendor: 'Unknown'
+        });
+      });
+    }
+
+    const lcpElementAudit = audits['largest-contentful-paint-element'];
+    if (lcpElementAudit && lcpElementAudit.details && lcpElementAudit.details.items) {
+      lcpElementAudit.details.items.forEach(item => {
+         const node = item.node ? (item.node.snippet || item.node.nodeLabel) : 'Unknown';
+         performanceImpact.lcpEvidence.push({
+           nodeSnippet: node,
+           type: 'LCP Element',
+           relatedPerformanceArea: 'LCP',
+           evidenceSource: 'largest-contentful-paint-element',
+           attributionStatus: 'UNATTRIBUTED'
+         });
+      });
+    }
+
+    const lcpLazyLoaded = audits['lcp-lazy-loaded'];
+    if (lcpLazyLoaded && lcpLazyLoaded.details && lcpLazyLoaded.details.items) {
+       lcpLazyLoaded.details.items.forEach(item => {
+          const node = item.node ? (item.node.snippet || item.node.nodeLabel) : 'Unknown';
+          performanceImpact.lcpEvidence.push({
+            nodeSnippet: node,
+            type: 'Lazy Loaded LCP',
+            relatedPerformanceArea: 'LCP',
+            evidenceSource: 'lcp-lazy-loaded',
+            attributionStatus: 'UNATTRIBUTED'
+          });
+       });
+    }
+    
+    // Clean up temporary matching properties
+    thirdPartyAnalysis.entities.forEach(ent => delete ent.normSubUrls);
+
+    thirdPartyAnalysis.entities.forEach(ent => delete ent.normSubUrls);
+
+    thirdPartyAnalysis.performanceImpact = performanceImpact;
+    // ---------------------------------------------
+
+    // --- Performance Report Generation ---
+    const performanceReport = {
+      platform: strategy,
+      pageSpeedScore: rawScore !== null ? rawScore : 'N/A',
+      affectedWebVitals: []
+    };
+
+    // Evaluate INP Evidence
+    const gtmInpTasks = performanceImpact.longTasks.filter(t => t.attributionStatus === 'GTM_CORE' || t.attributionStatus === 'GOOGLE_TAG');
+    const thirdPartyInpTasks = performanceImpact.longTasks.filter(t => t.attributionStatus === 'THIRD_PARTY');
+    
+    if (gtmInpTasks.length > 0 || thirdPartyInpTasks.length > 0) {
+      let issueDesc = '';
+      let scripts = [];
+      let attrStatus = 'UNATTRIBUTED';
+      
+      if (gtmInpTasks.length > 0) {
+         issueDesc = 'A GTM-related script or Google Tag is contributing to long main-thread tasks, which can increase the time required to process user interactions and create a responsiveness risk.';
+         
+         const hasGtm = gtmInpTasks.some(t => t.attributionStatus === 'GTM_CORE');
+         const hasGtag = gtmInpTasks.some(t => t.attributionStatus === 'GOOGLE_TAG');
+         if (hasGtm && hasGtag) attrStatus = 'GTM_RELATED';
+         else if (hasGtm) attrStatus = 'GTM_CORE';
+         else attrStatus = 'GOOGLE_TAG';
+         
+         scripts = gtmInpTasks.map(t => ({ url: t.url, durationMs: t.durationMs, attributionStatus: t.attributionStatus }));
+      } else {
+         issueDesc = 'A third-party script is contributing to long main-thread tasks, which can increase the time required to process user interactions and create a responsiveness risk.';
+         attrStatus = 'THIRD_PARTY';
+         scripts = thirdPartyInpTasks.map(t => ({ url: t.url, durationMs: t.durationMs, attributionStatus: t.attributionStatus }));
+      }
+
+      // Explicitly extract the actual INP from CrUX since Lighthouse audits don't have it
+      let actualInpValue = null;
+      if (data && data.loadingExperience && data.loadingExperience.metrics && data.loadingExperience.metrics.INTERACTION_TO_NEXT_PAINT) {
+         actualInpValue = data.loadingExperience.metrics.INTERACTION_TO_NEXT_PAINT.percentile;
+      } else if (audits['interaction-to-next-paint'] && audits['interaction-to-next-paint'].numericValue !== undefined) {
+         actualInpValue = audits['interaction-to-next-paint'].numericValue;
+      }
+
+      if (actualInpValue !== null) {
+        performanceReport.affectedWebVitals.push({
+          webVital: 'INP',
+          value: actualInpValue,
+          unit: 'ms',
+          impactLabel: 'INP_RESPONSIVENESS_RISK',
+          issue: issueDesc,
+          evidenceSource: 'long-tasks',
+          attributionStatus: attrStatus,
+          relatedScripts: scripts
+        });
+      }
+    }
+
+    // Evaluate LCP Evidence
+    const gtmLcpBlockers = performanceImpact.renderBlockingResources.filter(r => r.attributionStatus === 'GTM_CORE' || r.attributionStatus === 'GOOGLE_TAG');
+    const thirdPartyLcpBlockers = performanceImpact.renderBlockingResources.filter(r => r.attributionStatus === 'THIRD_PARTY');
+    
+    if (gtmLcpBlockers.length > 0 || thirdPartyLcpBlockers.length > 0) {
+       let issueDesc = '';
+       let scripts = [];
+       let attrStatus = 'UNATTRIBUTED';
+       
+       if (gtmLcpBlockers.length > 0) {
+          issueDesc = 'A GTM-related script or Google Tag is render-blocking, which delays the initial rendering of the page and can negatively impact the Largest Contentful Paint.';
+          
+          const hasGtm = gtmLcpBlockers.some(t => t.attributionStatus === 'GTM_CORE');
+          const hasGtag = gtmLcpBlockers.some(t => t.attributionStatus === 'GOOGLE_TAG');
+          if (hasGtm && hasGtag) attrStatus = 'GTM_RELATED';
+          else if (hasGtm) attrStatus = 'GTM_CORE';
+          else attrStatus = 'GOOGLE_TAG';
+          
+          scripts = gtmLcpBlockers.map(r => ({ url: r.url, wastedMs: r.wastedMs, attributionStatus: r.attributionStatus }));
+       } else {
+          issueDesc = 'A third-party script is render-blocking, which delays the initial rendering of the page and can negatively impact the Largest Contentful Paint.';
+          attrStatus = 'THIRD_PARTY';
+          scripts = thirdPartyLcpBlockers.map(r => ({ url: r.url, wastedMs: r.wastedMs, attributionStatus: r.attributionStatus }));
+       }
+       
+       performanceReport.affectedWebVitals.push({
+          webVital: 'LCP',
+          value: rawLcp, // Uses the actual extracted Web Vital value
+          unit: 'ms',
+          impactLabel: 'LCP_BLOCKER',
+          issue: issueDesc,
+          evidenceSource: 'render-blocking-resources',
+          attributionStatus: attrStatus,
+          relatedScripts: scripts
+       });
+    }
+
+    // Evaluate CLS Evidence
+    const attributedCls = performanceImpact.layoutShifts.filter(ls => ls.attributionStatus !== 'UNATTRIBUTED');
+    if (attributedCls.length > 0) {
+       performanceReport.affectedWebVitals.push({
+          webVital: 'CLS',
+          value: rawCls,
+          unit: 'score',
+          impactLabel: 'CLS_RELATED',
+          issue: 'A third-party or GTM-related resource has been explicitly identified as contributing to layout shifts on the page.',
+          evidenceSource: 'layout-shifts',
+          attributionStatus: attributedCls[0].attributionStatus,
+          relatedScripts: attributedCls.map(ls => ({ node: ls.affectedNode, score: ls.score }))
+       });
+    }
+    // ---------------------------------------------
+
+    const resultObj = {
+      url: targetUrl,
+      strategy: strategy,
+      performanceScore: {
+        value: rawScore,
+        status: getScoreStatus(rawScore)
+      },
+      coreWebVitals: {
+        lcp: {
+          value: rawLcp,
+          status: getLcpStatus(rawLcp)
+        },
+        inp: {
+          value: rawInp,
+          status: getInpStatus(rawInp)
+        },
+        cls: {
+          value: rawCls,
+          status: getClsStatus(rawCls)
+        }
+      },
+      otherMetrics: {
+        fcp: rawFcp,
+        ttfb: rawTtfb,
+        tbt: rawTbt,
+        speedIndex: rawSpeedIndex
+      },
+      opportunities: opportunities,
+      thirdPartyAnalysis: thirdPartyAnalysis,
+      performanceReport: performanceReport
+    };
+
+    return resultObj;
+
+  } catch (error) {
+    console.error('--- Error running PageSpeed test ---');
+    console.error(error.message);
+    throw error;
+  }
+}
+
+// Retain standalone execution logic
+if (require.main === module) {
+  const TARGET_URL = 'https://www.royalenfield.com/in/en/home/';
+  runPageSpeedTest(TARGET_URL, 'mobile')
+    .then(resultObj => {
+      const formatS = (val) => val !== null ? `${(val / 1000).toFixed(2)} s` : 'N/A';
+      const formatMs = (val) => val !== null ? `${Math.round(val).toLocaleString('en-US')} ms` : 'N/A';
+      const formatCls = (val) => val !== null ? `${val.toFixed(3)}` : 'N/A';
+      const formatStatus = (status) => status ? ` [${status}]` : '';
+
+      console.log('--- PageSpeed Insights Results ---');
+      
+      const ps = resultObj.performanceScore;
+      console.log(`Overall Performance Score : ${ps.value !== null ? ps.value : 'N/A'}${formatStatus(ps.status)}`);
+      
+      const cwv = resultObj.coreWebVitals;
+      console.log(`LCP (Largest Contentful Paint) : ${formatS(cwv.lcp.value)}${formatStatus(cwv.lcp.status)}`);
+      console.log(`INP (Interactive)              : ${formatMs(cwv.inp.value)}${formatStatus(cwv.inp.status)}`);
+      console.log(`CLS (Cumulative Layout Shift)  : ${formatCls(cwv.cls.value)}${formatStatus(cwv.cls.status)}`);
+      
+      const om = resultObj.otherMetrics;
+      console.log(`FCP (First Contentful Paint)   : ${formatS(om.fcp)}`);
+      console.log(`TTFB (Time to First Byte)      : ${formatMs(om.ttfb)}`);
+      console.log(`TBT (Total Blocking Time)      : ${formatS(om.tbt)}`);
+      console.log(`Speed Index                    : ${formatS(om.speedIndex)}`);
+      console.log('----------------------------------\n');
+      
+      console.log('--- Third-Party & GTM Analysis ---');
+      console.log(JSON.stringify(resultObj.thirdPartyAnalysis, null, 2));
+      console.log('----------------------------------\n');
+      
+      console.log('--- Final Performance Report ---');
+      console.log(JSON.stringify(resultObj.performanceReport, null, 2));
+      console.log('----------------------------------\n');
+    })
+    .catch(error => {
+      // Error is already logged
+    });
+}
+
+module.exports = { runPageSpeedTest };

@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>PageSpeed Insights Report</title>
+  <link rel="stylesheet" href="style.css">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+  <div class="container">
+    <header style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 2rem;">
+      <div>
+        <h1>PageSpeed Insights Report</h1>
+        <p>Enter a webpage URL to generate a performance report.</p>
+      </div>
+      <div>
+        <a href="/api/auth/google" target="_blank" id="top-auth-link" style="display: inline-block; background-color: var(--primary-color); color: white; padding: 0.5rem 1rem; border-radius: 0.5rem; text-decoration: none; font-weight: 500;">Login with Google</a>
+        <span id="top-auth-status" class="hidden" style="color: var(--status-good-text); font-weight: 500;">✓ Google Connected</span>
+      </div>
+    </header>
+
+    <main>
+      <form id="analyze-form">
+        <div class="card" style="margin-bottom: 2rem;">
+          <h2 style="font-size: 1.5rem; margin-bottom: 1rem; color: var(--text-primary);">Website Input</h2>
+          <div class="input-group">
+            <input type="url" id="url-input" placeholder="https://example.com" required>
+            <select id="strategy-input" class="strategy-select">
+              <option value="mobile" selected>Mobile</option>
+              <option value="desktop">Desktop</option>
+              <option value="both">Both</option>
+            </select>
+          </div>
+        </div>
+
+        <div id="gtm-configuration-section" class="card" style="margin-bottom: 2rem;">
+          <h2 style="font-size: 1.5rem; margin-bottom: 1rem; color: var(--text-primary);">GTM Configuration</h2>
+          <p id="gtm-auth-message" style="margin-bottom: 1rem; color: var(--text-secondary);">Login with Google is required to configure GTM.</p>
+          
+          <div class="gtm-controls" style="display: flex; flex-wrap: wrap; gap: 1rem;">
+            <div style="flex: 1; min-width: 200px;">
+              <label for="gtm-account-select" style="display: block; margin-bottom: 0.5rem; font-weight: 500;">GTM Account</label>
+              <select id="gtm-account-select" style="width: 100%; padding: 0.75rem; border: 1px solid var(--border-color); border-radius: 0.5rem; outline: none;" disabled>
+                <option value="">Select Account</option>
+              </select>
+            </div>
+            <div style="flex: 1; min-width: 200px;">
+              <label for="gtm-container-select" style="display: block; margin-bottom: 0.5rem; font-weight: 500;">GTM Container</label>
+              <select id="gtm-container-select" disabled style="width: 100%; padding: 0.75rem; border: 1px solid var(--border-color); border-radius: 0.5rem; outline: none;">
+                <option value="">Select Container</option>
+              </select>
+            </div>
+            <div style="flex: 1; min-width: 200px;">
+              <label for="gtm-workspace-select" style="display: block; margin-bottom: 0.5rem; font-weight: 500;">GTM Workspace</label>
+              <select id="gtm-workspace-select" disabled style="width: 100%; padding: 0.75rem; border: 1px solid var(--border-color); border-radius: 0.5rem; outline: none;">
+                <option value="">Select Workspace</option>
+              </select>
+            </div>
+          </div>
+        </div>
+        
+        <button type="submit" id="submit-btn" disabled style="width: 100%; font-size: 1.1rem; padding: 1rem;">Generate Report</button>
+        <div id="error-message" class="error hidden" style="margin-top: 1rem;"></div>
+      </form>
+
+      <div id="loading" class="hidden">
+        <div class="spinner"></div>
+        <p>Generating PageSpeed report...</p>
+      </div>
+
+      <div id="analyzed-url-container" class="hidden">
+        <div class="analyzed-url">
+          <strong>Analyzed URL:</strong> <span id="res-url"></span>
+        </div>
+      </div>
+
+      <div id="results" class="results-wrapper hidden"></div>
+
+      <template id="result-template">
+        <div class="result-section" style="margin-bottom: 3rem;">
+          <h2 class="strategy-title" style="margin-bottom: 2rem; border-bottom: 2px solid var(--border-color); padding-bottom: 0.5rem;"></h2>
+          <div class="error-message error hidden"></div>
+
+          <!-- 1. FINAL RESULT -->
+          <div class="final-result-section hidden card" style="background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%); border: 1px solid #bbf7d0; margin-bottom: 2rem; padding: 2rem;">
+            
+            <!-- 1. PageSpeed Performance Score -->
+            <h3 style="font-size: 1.5rem; margin-bottom: 1rem; color: #166534; text-align: center;">PageSpeed Performance Score</h3>
+            <div style="background: #ffffff; border-radius: 0.5rem; border: 1px solid #bbf7d0; overflow: hidden; margin-bottom: 2rem; padding: 2rem 1rem; text-align: center; box-shadow: 0 4px 6px rgba(0,0,0,0.05);">
+              <div class="pagespeed-score-estimation"></div>
+            </div>
+
+            <!-- 2. Server-Side Migration Opportunity -->
+            <h4 style="margin-bottom: 0.5rem; color: #15803d; font-size: 1.1rem;">Server-Side Migration Opportunity</h4>
+            <div style="background: #ffffff; border-radius: 0.5rem; border: 1px solid #bbf7d0; overflow: hidden; margin-bottom: 1.5rem;">
+              <table style="width: 100%; border-collapse: collapse; text-align: left;">
+                <thead style="background: #dcfce7; border-bottom: 1px solid #bbf7d0;">
+                  <tr>
+                    <th style="padding: 0.75rem 1rem; font-weight: 600; color: #166534;">Metric</th>
+                    <th style="padding: 0.75rem 1rem; font-weight: 600; color: #166534; text-align: right;">Value</th>
+                  </tr>
+                </thead>
+                <tbody class="migration-opportunity-body" style="color: #166534;">
+                </tbody>
+              </table>
+            </div>
+
+            <!-- 3. Potential Browser Workload Reduction -->
+            <h4 style="margin-bottom: 0.5rem; color: #15803d; font-size: 1.1rem;">Potential Browser Workload Reduction</h4>
+            <div style="background: #ffffff; border-radius: 0.5rem; border: 1px solid #bbf7d0; overflow: hidden; margin-bottom: 1.5rem;">
+              <table style="width: 100%; border-collapse: collapse; text-align: left;">
+                <thead style="background: #dcfce7; border-bottom: 1px solid #bbf7d0;">
+                  <tr>
+                    <th style="padding: 0.75rem 1rem; font-weight: 600; color: #166534;">Metric</th>
+                    <th style="padding: 0.75rem 1rem; font-weight: 600; color: #166534; text-align: right;">Current</th>
+                    <th style="padding: 0.75rem 1rem; font-weight: 600; color: #166534; text-align: right;">Estimated After Migration</th>
+                    <th style="padding: 0.75rem 1rem; font-weight: 600; color: #166534; text-align: right;">Potential Reduction</th>
+                  </tr>
+                </thead>
+                <tbody class="gtm-workload-body" style="color: #166534;">
+                </tbody>
+              </table>
+            </div>
+
+            <!-- 4. Estimated Web Vitals Impact -->
+            <div class="cwv-section-container">
+              <h4 style="margin-bottom: 0.5rem; color: #15803d; font-size: 1.1rem;">Estimated Web Vitals Impact</h4>
+              <div style="background: #ffffff; border-radius: 0.5rem; border: 1px solid #bbf7d0; overflow: hidden; margin-bottom: 1.5rem;">
+                <table style="width: 100%; border-collapse: collapse; text-align: left;">
+                  <thead style="background: #dcfce7; border-bottom: 1px solid #bbf7d0;">
+                    <tr>
+                      <th style="padding: 0.75rem 1rem; font-weight: 600; color: #166534;">Web Vital</th>
+                      <th style="padding: 0.75rem 1rem; font-weight: 600; color: #166534; text-align: right;">Current</th>
+                      <th style="padding: 0.75rem 1rem; font-weight: 600; color: #166534; text-align: right;">Estimated After Migration</th>
+                      <th style="padding: 0.75rem 1rem; font-weight: 600; color: #166534; text-align: right;">Potential Improvement</th>
+                    </tr>
+                  </thead>
+                  <tbody class="cwv-score-estimation" style="color: #166534;">
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+
+
+        </div>
+      </template>
+    </main>
+  </div>
+  <script src="script.js"></script>
+</body>
+</html>
