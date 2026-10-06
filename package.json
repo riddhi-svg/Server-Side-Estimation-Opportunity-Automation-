@@ -3,12 +3,12 @@
   "version": "1.0.0",
   "main": "src/backend/server.js",
   "scripts": {
-    "dev": "vite",
+    "start": "concurrently -n \"backend,frontend\" -c \"blue,green\" \"nodemon src/backend/server.js\" \"vite\"",
+    "dev": "concurrently -n \"backend,frontend\" -c \"blue,green\" \"nodemon src/backend/server.js\" \"vite\"",
+    "server": "nodemon src/backend/server.js",
+    "client": "vite",
     "build": "tsc && vite build",
     "preview": "vite preview",
-    "server": "node src/backend/server.js",
-    "dev:all": "concurrently \"npm run server\" \"npm run dev\"",
-    "start": "node src/backend/server.js",
     "test": "node --test tests/unit/**/*.test.js"
   },
   "keywords": [],
@@ -27,14 +27,13 @@
     "tailwind-merge": "^3.5.0"
   },
   "devDependencies": {
-    "@tailwindcss/postcss": "^4.3.3",
-    "@tailwindcss/vite": "^4.3.3",
     "@types/node": "^22.14.0",
     "@types/react": "^19.1.0",
     "@types/react-dom": "^19.1.0",
     "@vitejs/plugin-react": "^4.3.4",
     "autoprefixer": "^10.4.21",
     "concurrently": "^9.1.2",
+    "nodemon": "^3.1.9",
     "postcss": "^8.5.3",
     "tailwindcss": "^3.4.17",
     "typescript": "^5.8.2",
