@@ -50,6 +50,16 @@ export async function logoutUser() {
   await signOut(auth);
 }
 
+export async function checkServerAuth(): Promise<{ authenticated: boolean; hasEnterpriseToken: boolean }> {
+  try {
+    const res = await fetch('/api/auth/status');
+    if (res.ok) return await res.json();
+  } catch (err) {
+    console.warn('Could not verify server auth status:', err);
+  }
+  return { authenticated: false, hasEnterpriseToken: false };
+}
+
 export async function gtmFetch(url: string, options: RequestInit = {}): Promise<Response | null> {
   const token = getStoredAccessToken();
   const headers = new Headers(options.headers || {});
@@ -57,9 +67,12 @@ export async function gtmFetch(url: string, options: RequestInit = {}): Promise<
 
   const response = await fetch(url, { ...options, headers });
   if (response.status === 401) {
-    clearStoredAccessToken();
-    await loginWithGoogle();
-    return null;
+    const serverStatus = await checkServerAuth();
+    if (!serverStatus.authenticated) {
+      clearStoredAccessToken();
+      await loginWithGoogle();
+      return null;
+    }
   }
   return response;
 }

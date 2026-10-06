@@ -5,7 +5,8 @@ import {
   subscribeAuthState, 
   loginWithGoogle as doLogin, 
   logoutUser as doLogout,
-  getStoredAccessToken
+  getStoredAccessToken,
+  checkServerAuth
 } from '../services/firebase';
 
 export function useAuth() {
@@ -21,14 +22,37 @@ export function useAuth() {
 
     async function init() {
       await checkRedirectResult();
+      const serverStatus = await checkServerAuth();
+
       const unsubscribe = subscribeAuthState((user: UserProfile | null, token: string | null) => {
         if (!mounted) return;
-        setAuthState({
-          isAuthenticated: Boolean(user && token),
-          user,
-          accessToken: token,
-          loading: false
-        });
+        if (user && token) {
+          setAuthState({
+            isAuthenticated: true,
+            user,
+            accessToken: token,
+            loading: false
+          });
+        } else if (serverStatus.authenticated) {
+          setAuthState({
+            isAuthenticated: true,
+            user: {
+              uid: 'enterprise-gtm',
+              displayName: 'Enterprise GTM Connected',
+              email: '.env Enterprise Token Active',
+              photoURL: null
+            },
+            accessToken: null,
+            loading: false
+          });
+        } else {
+          setAuthState({
+            isAuthenticated: false,
+            user: null,
+            accessToken: null,
+            loading: false
+          });
+        }
       });
       return unsubscribe;
     }
@@ -46,9 +70,17 @@ export function useAuth() {
 
   const logout = useCallback(async () => {
     await doLogout();
+    const serverStatus = await checkServerAuth();
     setAuthState({
-      isAuthenticated: false,
-      user: null,
+      isAuthenticated: serverStatus.authenticated,
+      user: serverStatus.authenticated
+        ? {
+            uid: 'enterprise-gtm',
+            displayName: 'Enterprise GTM Connected',
+            email: '.env Enterprise Token Active',
+            photoURL: null
+          }
+        : null,
       accessToken: null,
       loading: false
     });
