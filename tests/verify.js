@@ -1,4 +1,4 @@
-const { runPageSpeedTest, generateFinalGtmMigrationResult } = require('../src/backend/pagespeed-test');
+const { generateFinalGtmMigrationResult } = require('../src/backend/services/estimation/migrationEstimator');
 
 const pageSpeedResult = {
   strategy: 'mobile',
@@ -18,4 +18,4 @@ const gtmTagsResult = {
 };
 
 const final = generateFinalGtmMigrationResult(pageSpeedResult, gtmTagsResult);
-console.log('Final:', final);
+console.log('Final generated successfully:', Boolean(final));

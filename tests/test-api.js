@@ -1,4 +1,5 @@
-const { runPageSpeedTest, generateFinalGtmMigrationResult } = require('../src/backend/pagespeed-test');
+const { runPageSpeedTest } = require('../src/backend/services/pagespeedService');
+const { generateFinalGtmMigrationResult } = require('../src/backend/services/estimation/migrationEstimator');
 
 async function run() {
   const url = 'https://www.royalenfield.com/in/en/home/';

@@ -1,0 +1,84 @@
+.card {
+  background: var(--card-bg);
+  padding: 1.5rem;
+  border-radius: 1rem;
+  box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);
+  border: 1px solid var(--border-color);
+}
+
+.section-heading { font-size: 1.5rem; color: var(--text-primary); margin-bottom: 1rem; }
+.card-header-flex { display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem; flex-wrap: wrap; gap: 0.5rem; }
+.subtext { font-size: 0.85rem; color: var(--text-secondary); }
+.form-label { display: block; margin-bottom: 0.5rem; font-weight: 500; }
+.form-label-bold { display: block; margin-bottom: 0.4rem; font-size: 0.88rem; font-weight: 600; color: var(--text-primary); }
+.app-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem; flex-wrap: wrap; gap: 1rem; text-align: left; }
+.auth-controls { display: flex; align-items: center; gap: 0.75rem; }
+.auth-btn { display: inline-flex; align-items: center; gap: 0.5rem; padding: 0.5rem 1rem; font-size: 0.95rem; }
+.auth-status-wrap { display: flex; align-items: center; gap: 0.75rem; }
+.status-good { color: var(--status-good-text); font-weight: 500; font-size: 0.95rem; }
+.btn-logout { background: none; border: 1px solid var(--border-color); color: var(--text-secondary); padding: 0.35rem 0.65rem; border-radius: 0.35rem; font-size: 0.8rem; cursor: pointer; }
+.btn-submit { width: 100%; font-size: 1.1rem; padding: 1rem; }
+
+.gtm-url-card { background: #f8fafc; border: 1px solid var(--border-color); border-radius: 0.75rem; padding: 1rem; margin-bottom: 1.25rem; }
+.relative-input { position: relative; min-width: 250px; }
+.form-control { width: 100%; padding: 0.65rem 2.2rem 0.65rem 0.85rem; border: 1px solid var(--border-color); border-radius: 0.5rem; font-size: 0.88rem; outline: none; font-family: inherit; background: #ffffff; }
+.clear-input-btn { position: absolute; right: 0.6rem; top: 50%; transform: translateY(-50%); background: none; border: none; color: #94a3b8; cursor: pointer; font-size: 1.2rem; padding: 0; line-height: 1; }
+.btn-apply { padding: 0.65rem 1.25rem; font-size: 0.9rem; border-radius: 0.5rem; display: inline-flex; align-items: center; gap: 0.4rem; white-space: nowrap; }
+.feedback-box { margin-top: 0.6rem; font-size: 0.85rem; padding: 0.5rem 0.75rem; border-radius: 0.35rem; line-height: 1.4; }
+.divider-text { display: flex; align-items: center; text-align: center; margin: 1rem 0; color: #94a3b8; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.05em; }
+.divider-text::before, .divider-text::after { content: ''; flex: 1; border-bottom: 1px solid var(--border-color); }
+.divider-text span { padding: 0 0.75rem; font-weight: 600; }
+.grid-3 { display: flex; flex-wrap: wrap; gap: 1rem; }
+.grid-3 > div { flex: 1; min-width: 220px; }
+.flex-row { display: flex; gap: 0.5rem; align-items: stretch; flex-wrap: wrap; }
+.flex-1 { flex: 1; }
+.flex-center { display: flex; align-items: center; }
+.gap-2 { gap: 0.5rem; }
+.mb-0 { margin-bottom: 0 !important; }
+.mb-3 { margin-bottom: 0.75rem !important; }
+.mb-4 { margin-bottom: 1.5rem !important; }
+.mt-3 { margin-top: 0.75rem !important; }
+.text-right { text-align: right !important; }
+
+/* Status Badges */
+.status-badge { font-size: 0.75rem; font-weight: 600; padding: 0.2rem 0.5rem; border-radius: 1rem; text-transform: uppercase; letter-spacing: 0.05em; }
+.status-Good { background: var(--status-good-bg); color: var(--status-good-text); }
+.status-Needs { background: var(--status-needs-bg); color: var(--status-needs-text); }
+.status-Poor { background: var(--status-poor-bg); color: var(--status-poor-text); }
+
+.strategy-select { padding: 0.75rem 1rem; border: 1px solid var(--border-color); border-radius: 0.5rem; font-family: inherit; font-size: 1rem; background-color: #ffffff; color: var(--text-primary); outline: none; transition: all 0.2s; cursor: pointer; }
+.strategy-select:focus { border-color: var(--primary-color); box-shadow: 0 0 0 3px rgb(59 130 246 / 0.2); }
+
+/* Searchable Select */
+.searchable-select-wrapper { position: relative; width: 100%; }
+.searchable-select { position: relative; width: 100%; }
+.searchable-trigger { width: 100%; min-height: 46px; padding: 0.6rem 0.85rem; background-color: #ffffff; border: 1px solid var(--border-color); border-radius: 0.5rem; color: var(--text-primary); display: flex; align-items: center; justify-content: space-between; gap: 0.5rem; cursor: pointer; text-align: left; font-family: inherit; font-size: 0.95rem; font-weight: 400; transition: border-color 0.2s, box-shadow 0.2s, background-color 0.2s; user-select: none; }
+.searchable-trigger:hover:not(:disabled) { border-color: #cbd5e1; background-color: #ffffff; }
+.searchable-trigger:focus-visible, .searchable-trigger.open { border-color: var(--primary-color); box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2); outline: none; }
+.searchable-trigger:disabled { background-color: #f1f5f9; color: #94a3b8; cursor: not-allowed; opacity: 0.75; }
+.searchable-trigger-content { display: flex; flex-direction: column; overflow: hidden; gap: 0.15rem; }
+.searchable-trigger.has-selection .searchable-trigger-text { font-weight: 600; color: var(--text-primary); }
+.searchable-trigger-text { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.searchable-trigger-badge { font-size: 0.72rem; color: var(--text-secondary); font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace; }
+.searchable-chevron { color: #64748b; flex-shrink: 0; transition: transform 0.2s ease; }
+
+.searchable-dropdown { position: absolute; top: calc(100% + 6px); left: 0; right: 0; z-index: 100; background: #ffffff; border: 1px solid var(--border-color); border-radius: 0.65rem; box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.05); display: flex; flex-direction: column; max-height: 320px; overflow: hidden; animation: dropdownSlideIn 0.15s ease-out; }
+@keyframes dropdownSlideIn { from { opacity: 0; transform: translateY(-4px); } to { opacity: 1; transform: translateY(0); } }
+
+.searchable-search-wrapper { display: flex; align-items: center; padding: 0.5rem 0.75rem; border-bottom: 1px solid var(--border-color); background: #fafafa; }
+.searchable-search-icon { color: #94a3b8; margin-right: 0.5rem; flex-shrink: 0; }
+.searchable-input { flex: 1; border: none; background: transparent; outline: none; font-size: 0.88rem; font-family: inherit; color: var(--text-primary); padding: 0.2rem 0; }
+.searchable-clear-btn { background: none; border: none; color: #94a3b8; font-size: 1.1rem; line-height: 1; padding: 0.1rem 0.3rem; cursor: pointer; border-radius: 0.25rem; }
+.searchable-clear-btn:hover { color: var(--text-primary); background: #e2e8f0; }
+.searchable-meta { padding: 0.35rem 0.75rem; background: #f8fafc; border-bottom: 1px solid #f1f5f9; font-size: 0.72rem; color: #64748b; display: flex; justify-content: space-between; align-items: center; }
+.searchable-options-list { list-style: none; padding: 0.35rem; margin: 0; overflow-y: auto; max-height: 220px; }
+.searchable-option-item { display: flex; align-items: center; justify-content: space-between; gap: 0.75rem; padding: 0.55rem 0.65rem; border-radius: 0.4rem; cursor: pointer; transition: background-color 0.15s; font-size: 0.9rem; }
+.searchable-option-item:hover, .searchable-option-item.active { background-color: #f1f5f9; }
+.searchable-option-item.selected { background-color: #eff6ff; color: #1e40af; font-weight: 500; }
+.searchable-option-main { display: flex; flex-direction: column; gap: 0.2rem; overflow: hidden; flex: 1; }
+.searchable-option-name { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: var(--text-primary); }
+.searchable-badge { font-size: 0.7rem; padding: 0.1rem 0.35rem; border-radius: 0.25rem; font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace; }
+.badge-id { background-color: #f1f5f9; color: #64748b; border: 1px solid #e2e8f0; }
+.badge-public { background-color: #ecfdf5; color: #047857; border: 1px solid #a7f3d0; font-weight: 600; }
+.search-highlight { background-color: #fef08a; color: #854d0e; padding: 0 0.15rem; border-radius: 0.15rem; font-weight: 600; }
+.searchable-empty-state { padding: 1.5rem 1rem; text-align: center; color: #64748b; font-size: 0.88rem; }
