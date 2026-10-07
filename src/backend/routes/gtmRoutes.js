@@ -74,16 +74,24 @@ router.get('/accounts/:accountId/containers/:containerId/workspaces/:workspaceId
     });
 
     res.json({
+      totalTags: classificationResult.totalTags,
       summary: {
         totalTags: classificationResult.totalTags,
         tiers: classificationResult.summary,
+        removable: classificationResult.summary.removable,
+        lighterPayload: classificationResult.summary.lighterPayload,
+        cannotMove: classificationResult.summary.cannotMove,
+        obsolete: classificationResult.summary.obsolete,
         removableVendors: classificationResult.removableVendors,
         tagsByCategory
       },
+      removableVendors: classificationResult.removableVendors,
       tags: categorizedTags,
-      tagsByTier: classificationResult.tagsByTier
+      tagsByTier: classificationResult.tagsByTier,
+      classifiedTags: classificationResult.classifiedTags
     });
   } catch (error) {
+
     res.status(error.statusCode || 500).json({ error: error.message, code: error.code || 'API_ERROR' });
   }
 });

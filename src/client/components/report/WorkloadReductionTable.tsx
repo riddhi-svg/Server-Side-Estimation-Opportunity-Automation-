@@ -1,13 +1,14 @@
 import React from 'react';
 import { Cpu } from 'lucide-react';
 import { WorkloadItem } from '../../types/estimation.types';
+import { cleanMetricDisplay } from '../../utils/formatters';
 
 interface WorkloadReductionTableProps {
-  rows: WorkloadItem[];
+  rows?: WorkloadItem[];
 }
 
 export const WorkloadReductionTable: React.FC<WorkloadReductionTableProps> = ({ rows }) => {
-  if (!rows || rows.length === 0) return null;
+  if (!rows || !Array.isArray(rows) || rows.length === 0) return null;
 
   return (
     <div className="bg-white border border-emerald-200 rounded-2xl p-6 shadow-sm mb-6">
@@ -32,14 +33,14 @@ export const WorkloadReductionTable: React.FC<WorkloadReductionTableProps> = ({ 
           <tbody className="divide-y divide-slate-100 text-slate-700">
             {rows.map((row, idx) => (
               <tr key={idx} className="hover:bg-slate-50/50 transition">
-                <td className="py-2.5 px-3 font-medium text-slate-900">{row.metric}</td>
-                <td className="py-2.5 px-3 text-right font-mono text-slate-600">{row.current}</td>
-                <td className="py-2.5 px-3 text-right font-mono font-medium text-slate-900">{row.estimated}</td>
+                <td className="py-2.5 px-3 font-medium text-slate-900">{row?.metric || 'Metric'}</td>
+                <td className="py-2.5 px-3 text-right font-mono text-slate-600">{cleanMetricDisplay(row?.current)}</td>
+                <td className="py-2.5 px-3 text-right font-mono font-medium text-slate-900">{cleanMetricDisplay(row?.estimated)}</td>
                 <td className="py-2.5 px-3 text-right font-mono font-bold text-emerald-700">
-                  {row.reduction}
-                  {row.reductionPercentage && (
+                  {cleanMetricDisplay(row?.reduction)}
+                  {row?.reductionPercentage && (
                     <span className="ml-1 text-[11px] font-normal text-emerald-600">
-                      ({row.reductionPercentage})
+                      ({cleanMetricDisplay(row.reductionPercentage)})
                     </span>
                   )}
                 </td>
@@ -51,3 +52,5 @@ export const WorkloadReductionTable: React.FC<WorkloadReductionTableProps> = ({ 
     </div>
   );
 };
+
+

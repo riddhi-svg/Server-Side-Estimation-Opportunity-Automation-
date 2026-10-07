@@ -3,11 +3,11 @@ import { Layers } from 'lucide-react';
 import { MigrationOpportunityRow } from '../../types/estimation.types';
 
 interface TagClassificationTableProps {
-  rows: MigrationOpportunityRow[];
+  rows?: MigrationOpportunityRow[];
 }
 
 export const TagClassificationTable: React.FC<TagClassificationTableProps> = ({ rows }) => {
-  if (!rows || rows.length === 0) return null;
+  if (!rows || !Array.isArray(rows) || rows.length === 0) return null;
 
   return (
     <div className="bg-white border border-emerald-200 rounded-2xl p-6 shadow-sm mb-6">
@@ -29,31 +29,33 @@ export const TagClassificationTable: React.FC<TagClassificationTableProps> = ({ 
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-100 text-slate-700">
-            {rows.map((row, idx) => (
-              <tr key={idx} className="hover:bg-slate-50/50 transition">
-                <td className="py-2.5 px-3 font-medium">
-                  <div className="flex items-center gap-2">
-                    <span
-                      className={`w-2 h-2 rounded-full ${
-                        row.tier.includes('Removable')
-                          ? 'bg-emerald-500'
-                          : row.tier.includes('Lighter')
-                          ? 'bg-blue-500'
-                          : row.tier.includes('Delete')
-                          ? 'bg-rose-500'
-                          : 'bg-amber-500'
-                      }`}
-                    />
-                    <span>{row.tier}</span>
-                  </div>
-                </td>
-                <td className="py-2.5 px-3 text-slate-500">{row.description}</td>
-                <td className="py-2.5 px-3 text-right font-bold text-slate-900">{row.count}</td>
-              </tr>
-            ))}
+            {rows.map((row, idx) => {
+              const tier = row?.tier || 'Unclassified';
+              const dotColor = tier.includes('Removable')
+                ? 'bg-emerald-500'
+                : tier.includes('Lighter')
+                ? 'bg-blue-500'
+                : tier.includes('Delete')
+                ? 'bg-rose-500'
+                : 'bg-amber-500';
+
+              return (
+                <tr key={idx} className="hover:bg-slate-50/50 transition">
+                  <td className="py-2.5 px-3 font-medium">
+                    <div className="flex items-center gap-2">
+                      <span className={`w-2 h-2 rounded-full ${dotColor}`} />
+                      <span>{tier}</span>
+                    </div>
+                  </td>
+                  <td className="py-2.5 px-3 text-slate-500">{row?.description || '—'}</td>
+                  <td className="py-2.5 px-3 text-right font-bold text-slate-900">{row?.count ?? 0}</td>
+                </tr>
+              );
+            })}
           </tbody>
         </table>
       </div>
     </div>
   );
 };
+

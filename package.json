@@ -8,8 +8,10 @@
     "server": "nodemon src/backend/server.js",
     "client": "vite",
     "build": "tsc && vite build",
+    "lint": "tsc --noEmit",
     "preview": "vite preview",
-    "test": "node --test tests/unit/**/*.test.js"
+    "test": "node --test tests/unit/*.test.js"
+
   },
   "keywords": [],
   "author": "",

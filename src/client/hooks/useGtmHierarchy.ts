@@ -103,7 +103,7 @@ export function useGtmHierarchy(isAuthenticated: boolean) {
       throw new Error('Could not detect GTM Account or Container ID from the provided URL.');
     }
 
-    let accItem = accounts.find(a => a.id === parsed.accountId);
+    let accItem: SelectItem | null | undefined = accounts.find(a => a.id === parsed.accountId);
     if (!accItem && parsed.accountId) {
       accItem = await fetchAccountById(parsed.accountId);
       if (accItem) setAccounts(prev => [accItem!, ...prev.filter(a => a.id !== accItem!.id)]);

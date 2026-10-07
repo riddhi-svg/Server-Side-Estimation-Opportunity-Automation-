@@ -4,7 +4,7 @@
 
 const { normalizeLighthouseReport } = require('../lighthouseAdapter');
 const { attributeWorkload } = require('./attributionEngine');
-const { classifyContainerTags } = require('../tagClassifier');
+const { normalizeTagClassification } = require('../tagClassifier');
 const {
   DEFAULT_HEURISTICS,
   estimateFcpAndLcp,
@@ -21,20 +21,8 @@ function calculateMigrationEstimation(lhrOrPsiResult, gtmTagsResult = {}, userOp
   const formFactor = normalizedLhr.formFactor || 'mobile';
   const lighthouseVersion = normalizedLhr.lighthouseVersion;
 
-  let tagClassification;
-  if (gtmTagsResult.tagsByTier && gtmTagsResult.summary) {
-    tagClassification = gtmTagsResult;
-  } else if (Array.isArray(gtmTagsResult.tags)) {
-    tagClassification = classifyContainerTags(gtmTagsResult.tags);
-  } else if (gtmTagsResult.tags && typeof gtmTagsResult.tags === 'object') {
-    const flattened = [];
-    Object.values(gtmTagsResult.tags).forEach(group => {
-      if (Array.isArray(group)) flattened.push(...group);
-    });
-    tagClassification = classifyContainerTags(flattened);
-  } else {
-    tagClassification = classifyContainerTags([]);
-  }
+  const tagClassification = normalizeTagClassification(gtmTagsResult);
+
 
   const workload = attributeWorkload(normalizedLhr, tagClassification, userOptions);
   const attributable = workload.totalRemovable;

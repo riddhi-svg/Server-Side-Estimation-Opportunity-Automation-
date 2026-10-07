@@ -4,6 +4,8 @@ import { AnalyzeResponse } from '../types/report.types';
 export function buildCompactGtmPayload(gtmResult: GtmTagsResult | null): any {
   if (!gtmResult) return null;
   const compact: any = {
+    totalTags: gtmResult.totalTags ?? gtmResult.summary?.totalTags ?? 0,
+    removableVendors: gtmResult.removableVendors || gtmResult.summary?.removableVendors || [],
     summary: gtmResult.summary,
     tags: {},
     tagsByTier: gtmResult.tagsByTier || {}
@@ -18,13 +20,15 @@ export function buildCompactGtmPayload(gtmResult: GtmTagsResult | null): any {
         type: t.type,
         tier: t.tier,
         savingsTier: t.savingsTier,
-        isRemovable: t.isRemovable
+        isRemovable: t.isRemovable,
+        originalData: t.originalData || t
       }));
     }
   }
 
   return compact;
 }
+
 
 export async function runAnalysis(
   url: string,

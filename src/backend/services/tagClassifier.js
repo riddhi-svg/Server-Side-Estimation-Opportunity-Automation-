@@ -54,8 +54,12 @@ function classifyContainerTags(tagsList = []) {
   };
 }
 
+const { normalizeTagClassification } = require('./classification/tagNormalizer');
+
 module.exports = {
   CLASSIFICATION_TIERS,
   classifyTag,
-  classifyContainerTags
+  classifyContainerTags,
+  normalizeTagClassification
 };
+

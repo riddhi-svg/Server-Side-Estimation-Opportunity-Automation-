@@ -19,6 +19,8 @@ export interface GtmTag {
 }
 
 export interface GtmTagsResult {
+  totalTags?: number;
+  removableVendors?: string[];
   summary: {
     totalTags: number;
     tiers?: {
@@ -27,12 +29,18 @@ export interface GtmTagsResult {
       cannotMove: number;
       obsolete: number;
     };
+    removable?: number;
+    lighterPayload?: number;
+    cannotMove?: number;
+    obsolete?: number;
     removableVendors?: string[];
     tagsByCategory?: Record<string, number>;
   };
   tags: Record<string, GtmTag[]>;
   tagsByTier?: Record<string, GtmTag[]>;
+  classifiedTags?: any[];
 }
+
 
 export interface ParsedGtmUrl {
   accountId: string | null;
