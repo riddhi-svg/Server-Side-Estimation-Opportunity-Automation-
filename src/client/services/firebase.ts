@@ -11,12 +11,12 @@ import {
 import { UserProfile } from '../types/auth.types';
 
 export const firebaseConfig = {
-  apiKey: "AIzaSyA72XS4RxIzo6c6JgxmicJzs8ue1lZV7SY",
-  authDomain: "tvc-int-del-portal.firebaseapp.com",
-  projectId: "tvc-int-del-portal",
-  storageBucket: "tvc-int-del-portal.firebasestorage.app",
-  messagingSenderId: "337270952775",
-  appId: "1:337270952775:web:4539705109e042dfb17262"
+  apiKey: import.meta.env.VITE_FIREBASE_API_KEY || '',
+  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN || '',
+  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID || '',
+  storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET || '',
+  messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID || '',
+  appId: import.meta.env.VITE_FIREBASE_APP_ID || ''
 };
 
 export const app = initializeApp(firebaseConfig);

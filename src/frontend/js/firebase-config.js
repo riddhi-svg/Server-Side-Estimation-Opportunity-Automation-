@@ -9,14 +9,14 @@ import {
   signOut 
 } from "firebase/auth";
 
-// Your web app's Firebase configuration
+// Your web app's Firebase configuration loaded from environment
 export const firebaseConfig = {
-  apiKey: "AIzaSyA72XS4RxIzo6c6JgxmicJzs8ue1lZV7SY",
-  authDomain: "tvc-int-del-portal.firebaseapp.com",
-  projectId: "tvc-int-del-portal",
-  storageBucket: "tvc-int-del-portal.firebasestorage.app",
-  messagingSenderId: "337270952775",
-  appId: "1:337270952775:web:4539705109e042dfb17262"
+  apiKey: (typeof import.meta !== 'undefined' && import.meta.env && import.meta.env.VITE_FIREBASE_API_KEY) || '',
+  authDomain: (typeof import.meta !== 'undefined' && import.meta.env && import.meta.env.VITE_FIREBASE_AUTH_DOMAIN) || '',
+  projectId: (typeof import.meta !== 'undefined' && import.meta.env && import.meta.env.VITE_FIREBASE_PROJECT_ID) || '',
+  storageBucket: (typeof import.meta !== 'undefined' && import.meta.env && import.meta.env.VITE_FIREBASE_STORAGE_BUCKET) || '',
+  messagingSenderId: (typeof import.meta !== 'undefined' && import.meta.env && import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID) || '',
+  appId: (typeof import.meta !== 'undefined' && import.meta.env && import.meta.env.VITE_FIREBASE_APP_ID) || ''
 };
 
 // Initialize Firebase
