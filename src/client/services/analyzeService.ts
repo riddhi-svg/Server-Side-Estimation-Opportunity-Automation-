@@ -50,3 +50,25 @@ export async function runAnalysis(
 
   return data;
 }
+
+export async function dispatchReportEmail(
+  url: string,
+  strategy: string,
+  finalResult: any,
+  toEmail = 'jimit@tatvic.com',
+  ccEmail = ''
+): Promise<{ success: boolean; messageId?: string; error?: string }> {
+  const res = await fetch('/api/analyze/email-report', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ url, strategy, finalResult, to: toEmail, cc: ccEmail })
+  });
+
+  const data = await res.json();
+  if (!res.ok) {
+    throw new Error(data.error || 'Failed to dispatch report email.');
+  }
+
+  return data;
+}
+

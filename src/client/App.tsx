@@ -116,7 +116,7 @@ export const App: React.FC = () => {
         {results && results.length > 0 && (
           <div className="mt-12 space-y-8 animate-in fade-in duration-300">
             {results.map((res, idx) => (
-              <StrategyReportSection key={idx} result={res} />
+              <StrategyReportSection key={idx} result={res} analyzedUrl={url} />
             ))}
           </div>
         )}
